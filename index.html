@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Le Système Solaire d'Adélie ✨</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Baloo+2:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --space: #0a0e27;
+    --sun-gold: #FFD93D;
+    --sun-orange: #FF8C00;
+    --star-white: #f0f0ff;
+    --card-bg: rgba(255,255,255,0.06);
+    --card-border: rgba(255,255,255,0.1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Fredoka', sans-serif;
+    background: var(--space);
+    color: white;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .stars { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+  .star { position: absolute; border-radius: 50%; background: var(--star-white); }
+
+  @keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+  .header { position: relative; z-index: 2; text-align: center; padding: 2rem 1rem 0.5rem; }
+
+  .header h1 {
+    font-family: 'Baloo 2', cursive;
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    background: linear-gradient(135deg, #FFD93D, #FF8C00, #FF6B6B);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; letter-spacing: 1px;
+    animation: titleFloat 3s ease-in-out infinite;
+  }
+
+  .header p { font-size: clamp(0.9rem, 2.5vw, 1.15rem); color: rgba(255,255,255,0.6); margin-top: 0.3rem; }
+
+  @keyframes titleFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+
+  .mode-toggle {
+    position: relative; z-index: 2;
+    display: flex; justify-content: center; gap: 8px;
+    padding: 0.8rem 1rem 0.3rem;
+  }
+
+  .mode-btn {
+    font-family: 'Fredoka', sans-serif; font-size: clamp(0.8rem, 2vw, 0.95rem);
+    font-weight: 600; padding: 0.5rem 1.2rem; border-radius: 30px;
+    border: 2px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.5); cursor: pointer; transition: all 0.3s;
+  }
+
+  .mode-btn.active { background: rgba(255,215,0,0.15); border-color: rgba(255,215,0,0.4); color: #FFD93D; }
+  .mode-btn:hover { border-color: rgba(255,255,255,0.3); }
+
+  .voice-toggle {
+    font-family: 'Fredoka', sans-serif; font-size: clamp(0.8rem, 2vw, 0.95rem);
+    font-weight: 600; padding: 0.5rem 1rem; border-radius: 30px;
+    border: 2px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.4); cursor: pointer; transition: all 0.3s;
+    display: flex; align-items: center; gap: 5px;
+  }
+
+  .voice-toggle.active { background: rgba(100,200,255,0.15); border-color: rgba(100,200,255,0.4); color: #64C8FF; }
+  .voice-toggle:hover { border-color: rgba(255,255,255,0.3); }
+
+  .voice-icon { font-size: 1.1rem; }
+
+  .solar-system {
+    position: relative; z-index: 2;
+    display: flex; align-items: center; justify-content: center;
+    padding: 1.5rem 0.5rem; gap: 0;
+    flex-wrap: nowrap; overflow-x: auto; min-height: 320px;
+  }
+
+  .sun {
+    width: 120px; height: 120px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #FFF7AE, #FFD93D 40%, #FF8C00 75%, #CC5500);
+    box-shadow: 0 0 30px rgba(255,200,0,0.6), 0 0 60px rgba(255,140,0,0.3), 0 0 100px rgba(255,100,0,0.15);
+    flex-shrink: 0; cursor: pointer; transition: transform 0.3s, box-shadow 0.3s;
+    animation: sunPulse 4s ease-in-out infinite;
+  }
+
+  .sun:hover { transform: scale(1.15); box-shadow: 0 0 40px rgba(255,200,0,0.8), 0 0 80px rgba(255,140,0,0.5), 0 0 120px rgba(255,100,0,0.25); }
+  .sun.active { transform: scale(1.2); }
+
+  @keyframes sunPulse {
+    0%, 100% { box-shadow: 0 0 30px rgba(255,200,0,0.6), 0 0 60px rgba(255,140,0,0.3); }
+    50% { box-shadow: 0 0 45px rgba(255,200,0,0.8), 0 0 90px rgba(255,140,0,0.4); }
+  }
+
+  .planet-wrapper {
+    display: flex; flex-direction: column; align-items: center;
+    cursor: pointer; transition: transform 0.3s;
+    flex-shrink: 0; padding: 0 clamp(4px, 1vw, 12px);
+  }
+
+  .planet-wrapper:hover { transform: translateY(-8px); }
+  .planet-wrapper:hover .planet { box-shadow: 0 0 20px var(--glow-color, rgba(255,255,255,0.4)); }
+
+  .planet-wrapper.active .planet {
+    box-shadow: 0 0 25px var(--glow-color, rgba(255,255,255,0.5));
+    animation: bounce 0.6s ease;
+  }
+
+  @keyframes bounce {
+    0% { transform: scale(1); } 40% { transform: scale(1.25); }
+    70% { transform: scale(0.95); } 100% { transform: scale(1); }
+  }
+
+  .planet {
+    border-radius: 50%; transition: box-shadow 0.3s, transform 0.3s;
+    position: relative; min-width: 3px; min-height: 3px;
+  }
+
+  .planet::before {
+    content: ''; position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%); width: 44px; height: 44px; border-radius: 50%;
+  }
+
+  .planet-wrapper[data-tiny="true"] .planet::after {
+    content: ''; position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%); width: 20px; height: 20px;
+    border-radius: 50%; background: var(--glow-color, rgba(255,255,255,0.08));
+    opacity: 0.3; pointer-events: none;
+  }
+
+  .planet-name {
+    font-size: clamp(0.55rem, 1.5vw, 0.75rem); font-weight: 600;
+    margin-top: 6px; opacity: 0.7; transition: opacity 0.3s;
+    text-align: center; white-space: nowrap;
+  }
+
+  .planet-wrapper:hover .planet-name, .planet-wrapper.active .planet-name { opacity: 1; }
+
+  .saturn-ring {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%) rotateX(65deg);
+    width: 180%; height: 180%; border: 3px solid rgba(210,180,140,0.5);
+    border-radius: 50%; pointer-events: none;
+  }
+
+  .info-card {
+    position: relative; z-index: 3; max-width: 500px;
+    margin: 0 auto 2rem; padding: 0 1rem; min-height: 260px;
+  }
+
+  .card {
+    background: var(--card-bg); backdrop-filter: blur(20px);
+    border: 1px solid var(--card-border); border-radius: 24px;
+    padding: 1.5rem 1.8rem; transition: all 0.4s ease; animation: cardIn 0.5s ease;
+  }
+
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 1rem; }
+  .card-emoji { font-size: 2.2rem; line-height: 1; }
+  .card-title { font-family: 'Baloo 2', cursive; font-size: 1.6rem; font-weight: 700; }
+  .card-subtitle { font-size: 0.8rem; color: rgba(255,255,255,0.45); font-weight: 400; }
+  .card-body { font-size: 1rem; line-height: 1.65; color: rgba(255,255,255,0.85); font-weight: 400; }
+
+  .fun-fact {
+    margin-top: 1rem; padding: 0.8rem 1rem;
+    background: rgba(255,255,255,0.05); border-radius: 14px;
+    border-left: 3px solid var(--accent, #FFD93D); font-size: 0.9rem;
+  }
+
+  .fun-fact-label {
+    font-weight: 700; color: var(--accent, #FFD93D);
+    font-size: 0.75rem; text-transform: uppercase;
+    letter-spacing: 1.5px; margin-bottom: 4px;
+  }
+
+  .tap-hint {
+    text-align: center; margin-top: 0.6rem;
+    font-size: 0.7rem; color: rgba(255,255,255,0.25);
+  }
+
+  .stats { display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap; }
+
+  .stat {
+    background: rgba(255,255,255,0.04); border-radius: 12px;
+    padding: 0.5rem 0.8rem; text-align: center; flex: 1; min-width: 80px;
+  }
+
+  .stat-value { font-family: 'Baloo 2', cursive; font-size: 1.1rem; font-weight: 700; color: var(--accent, #FFD93D); }
+  .stat-label { font-size: 0.65rem; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: 1px; }
+
+  .prompt-card { text-align: center; padding: 2.5rem 1.5rem; }
+  .prompt-card .prompt-emoji { font-size: 3rem; display: block; margin-bottom: 0.8rem; animation: pointUp 1.5s ease-in-out infinite; }
+
+  @keyframes pointUp { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+  .prompt-card p { font-size: 1.15rem; color: rgba(255,255,255,0.6); line-height: 1.6; }
+
+  .quiz-question { font-family: 'Baloo 2', cursive; font-size: clamp(1.1rem, 3vw, 1.4rem); text-align: center; margin-bottom: 1.2rem; line-height: 1.4; }
+  .quiz-answers { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .quiz-btn {
+    font-family: 'Fredoka', sans-serif; font-size: clamp(0.9rem, 2.5vw, 1.05rem);
+    font-weight: 600; padding: 0.9rem 0.6rem; border-radius: 16px;
+    border: 2px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.85); cursor: pointer; transition: all 0.25s;
+    text-align: center; line-height: 1.3; min-height: 60px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .quiz-btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.25); transform: scale(1.03); }
+  .quiz-btn:active { transform: scale(0.97); }
+
+  .quiz-btn.correct { background: rgba(76,175,80,0.25); border-color: rgba(76,175,80,0.6); color: #81C784; animation: correctPop 0.5s ease; }
+  .quiz-btn.wrong { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.06); color: rgba(255,255,255,0.3); }
+
+  @keyframes correctPop { 0% { transform: scale(1); } 30% { transform: scale(1.08); } 100% { transform: scale(1); } }
+
+  .quiz-feedback { text-align: center; margin-top: 1rem; font-size: 1.1rem; font-weight: 600; min-height: 2.5rem; }
+  .quiz-feedback.success { color: #81C784; }
+  .quiz-feedback.encourage { color: #FFD93D; }
+
+  .quiz-next {
+    font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600;
+    margin-top: 0.8rem; padding: 0.6rem 1.5rem; border-radius: 30px; border: none;
+    background: linear-gradient(135deg, #FFD93D, #FF8C00);
+    color: #1a1a2e; cursor: pointer; transition: all 0.3s; display: none;
+  }
+
+  .quiz-next:hover { transform: scale(1.05); filter: brightness(1.1); }
+  .quiz-next.visible { display: inline-block; }
+
+  .quiz-score { text-align: center; padding: 0.6rem 0 0; }
+  .quiz-score-text { font-size: 0.85rem; color: rgba(255,255,255,0.4); }
+  .quiz-stars { font-size: 1.4rem; letter-spacing: 4px; margin-top: 4px; }
+
+  .celebration {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: center; flex-direction: column;
+    background: rgba(10,14,39,0.85); backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none; transition: opacity 0.4s;
+  }
+
+  .celebration.active { opacity: 1; pointer-events: auto; }
+  .celebration-emoji { font-size: 4rem; animation: celebBounce 0.8s ease infinite; }
+
+  @keyframes celebBounce { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-15px) scale(1.1); } }
+
+  .celebration-text {
+    font-family: 'Baloo 2', cursive; font-size: clamp(1.5rem, 4vw, 2rem); margin-top: 1rem;
+    background: linear-gradient(135deg, #FFD93D, #FF6B6B);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+
+  .celebration-sub { font-size: 1rem; color: rgba(255,255,255,0.6); margin-top: 0.5rem; }
+
+  .celebration-btns { display: flex; gap: 10px; margin-top: 1.5rem; flex-wrap: wrap; justify-content: center; }
+
+  .celebration-btn {
+    font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600;
+    padding: 0.7rem 1.5rem; border-radius: 30px; border: none;
+    background: linear-gradient(135deg, #FFD93D, #FF8C00);
+    color: #1a1a2e; cursor: pointer; transition: all 0.3s;
+  }
+
+  .celebration-btn:hover { transform: scale(1.05); }
+  .celebration-btn.secondary { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); border: 2px solid rgba(255,255,255,0.15); }
+
+  .confetti-piece { position: fixed; width: 10px; height: 10px; z-index: 101; pointer-events: none; border-radius: 2px; }
+
+  @keyframes confettiFall {
+    0% { opacity: 1; transform: translateY(0) rotate(0deg); }
+    100% { opacity: 0; transform: translateY(100vh) rotate(720deg); }
+  }
+
+  @media (max-width: 600px) {
+    .solar-system { padding: 1rem 0.3rem; min-height: 260px; }
+    .sun { width: 70px; height: 70px; }
+    .card { padding: 1.2rem; }
+    .stats { gap: 0.5rem; }
+    .quiz-answers { gap: 8px; }
+    .quiz-btn { padding: 0.7rem 0.5rem; min-height: 50px; }
+  }
+
+  .shooting-star {
+    position: fixed; width: 3px; height: 3px; background: white;
+    border-radius: 50%; z-index: 1; pointer-events: none; opacity: 0;
+  }
+
+  .shooting-star::after {
+    content: ''; position: absolute; width: 80px; height: 1px;
+    background: linear-gradient(to left, white, transparent);
+    top: 50%; right: 100%; transform: translateY(-50%);
+  }
+
+  @keyframes shoot {
+    0% { opacity: 0; transform: translate(0,0); }
+    10% { opacity: 1; } 90% { opacity: 1; }
+    100% { opacity: 0; transform: translate(-400px, 200px); }
+  }
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+
+<div class="header">
+  <h1>🚀 Le Système Solaire</h1>
+  <p id="headerSub">Clique sur une planète pour la découvrir !</p>
+  <p style="font-size: clamp(0.65rem, 1.8vw, 0.8rem); color: rgba(255,255,255,0.35); margin-top: 0.3rem;">Les tailles des planètes sont proportionnelles entre elles ✨ (le Soleil est réduit !)</p>
+</div>
+
+<div class="mode-toggle">
+  <button class="mode-btn active" id="btnExplore" onclick="setMode('explore')">🔭 Explorer</button>
+  <button class="mode-btn" id="btnQuiz" onclick="setMode('quiz')">🧠 Quiz</button>
+  <button class="voice-toggle" id="btnVoice" onclick="toggleVoice()">
+    <span class="voice-icon" id="voiceIcon">🔇</span> <span id="voiceLabel">Voix</span>
+  </button>
+</div>
+
+<div class="solar-system" id="solarSystem"></div>
+
+<div class="info-card" id="infoCard">
+  <div class="card prompt-card">
+    <span class="prompt-emoji">👆</span>
+    <p>Choisis le Soleil ou une planète<br>pour apprendre des choses super cool !</p>
+  </div>
+</div>
+
+<div class="celebration" id="celebration">
+  <div class="celebration-emoji" id="celebEmoji">🏆🌟🚀</div>
+  <div class="celebration-text" id="celebText">Bravo !</div>
+  <div class="celebration-sub" id="celebSub"></div>
+  <div class="celebration-btns">
+    <button class="celebration-btn" onclick="closeCelebration('explore')">🔭 Explorer</button>
+    <button class="celebration-btn secondary" onclick="closeCelebration('quiz')">🔄 Rejouer</button>
+  </div>
+</div>
+
+<script>
+// =====================================================
+// PLANET DATA — rich descriptions + multiple fun facts
+// =====================================================
+const bodies = [
+  {
+    name: "Soleil", nameFr: "Le Soleil", emoji: "☀️",
+    subtitle: "Notre étoile", isSun: true, accent: "#FFD93D",
+    desc: "Le Soleil est une énorme boule de gaz brûlant ! C'est une étoile — la plus proche de nous. Il nous donne de la lumière pour voir et de la chaleur pour vivre. Sans lui, la Terre serait un gros glaçon perdu dans le noir. Le Soleil est né il y a environ 4 milliards et demi d'années, et il va encore briller pendant très, très longtemps !",
+    funFacts: [
+      "Le Soleil est tellement gros qu'on pourrait mettre un million de Terres dedans !",
+      "La lumière du Soleil prend 8 minutes pour arriver jusqu'à nous. Quand tu vois le Soleil, tu le vois comme il était il y a 8 minutes !",
+      "Le Soleil perd 4 millions de tonnes par seconde en fabriquant de la lumière. Mais il est tellement gros que ça ne change presque rien !",
+      "Au centre du Soleil, il fait 15 millions de degrés ! C'est tellement chaud qu'on ne peut même pas l'imaginer.",
+      "Le Soleil est fait surtout d'hydrogène et d'hélium — le même gaz qui fait flotter les ballons de fête !",
+      "Le Soleil tourne sur lui-même, mais pas en un seul bloc : son milieu tourne plus vite que ses pôles !",
+    ],
+    stats: [{ value: "4.6 G", label: "Milliards d'années" }, { value: "5 500°C", label: "Surface" }, { value: "⭐", label: "Étoile" }]
+  },
+  {
+    name: "Mercure", emoji: "🪨", subtitle: "La plus rapide",
+    size: 3, color: "radial-gradient(circle at 35% 35%, #b8b8b8, #8a8a8a 60%, #5a5a5a)",
+    glow: "rgba(180,180,180,0.4)", accent: "#b8b8b8",
+    desc: "Mercure est la planète la plus proche du Soleil et la plus petite de toutes ! Elle fait le tour du Soleil super vite — en seulement 88 jours, c'est la championne de la course ! Mais elle tourne très lentement sur elle-même. Un seul jour sur Mercure dure 59 jours terrestres ! Imagine : tu attendrais presque deux mois pour voir un coucher de soleil.",
+    funFacts: [
+      "Sur Mercure, le jour c'est brûlant (430°C) et la nuit c'est glacial (-180°C). Brrr et Aïe en même temps !",
+      "Mercure est couverte de cratères, comme notre Lune. Des roches de l'espace lui sont tombées dessus pendant des milliards d'années !",
+      "Un an sur Mercure (88 jours) est plus court qu'un jour sur Mercure (176 jours du lever au lever du soleil) ! C'est très bizarre.",
+      "Mercure n'a presque pas d'atmosphère. Ça veut dire qu'il n'y a pas de vent, pas de nuages, pas de pluie — et pas de ciel bleu non plus.",
+      "Malgré qu'elle soit la plus proche du Soleil, Mercure n'est PAS la plus chaude ! C'est Vénus qui gagne ce titre.",
+      "Mercure a un énorme cœur en fer — presque aussi gros que notre Lune ! C'est comme un gros noyau de métal avec juste un peu de roche autour.",
+    ],
+    stats: [{ value: "88", label: "Jours/an" }, { value: "4 880 km", label: "Diamètre" }, { value: "0", label: "Lunes" }]
+  },
+  {
+    name: "Vénus", emoji: "🌟", subtitle: "La plus chaude",
+    size: 7, color: "radial-gradient(circle at 35% 35%, #ffe4b5, #e8b86d 50%, #c4853d)",
+    glow: "rgba(232,184,109,0.4)", accent: "#e8b86d",
+    desc: "Vénus est la planète la plus chaude du système solaire — encore plus chaude que Mercure, qui est pourtant plus proche du Soleil ! C'est parce que ses nuages épais gardent toute la chaleur comme une grosse couverture. On peut souvent voir Vénus briller très fort le matin ou le soir — on l'appelle « l'étoile du berger », même si ce n'est pas une étoile !",
+    funFacts: [
+      "Vénus tourne à l'envers ! Le Soleil se lève à l'ouest et se couche à l'est là-bas. Bizarre, hein ?",
+      "Vénus est la jumelle de la Terre en taille — elles font presque le même diamètre. Mais l'une est un paradis, l'autre un enfer brûlant !",
+      "Sur Vénus, il pleut de l'acide sulfurique ! Mais les gouttes s'évaporent avant de toucher le sol parce qu'il fait trop chaud.",
+      "Un jour sur Vénus est plus long qu'une année sur Vénus. Elle met 243 jours terrestres pour tourner sur elle-même, mais seulement 225 pour faire le tour du Soleil !",
+      "La pression sur Vénus est comme être à 900 mètres sous l'eau. C'est comme avoir un éléphant assis sur ton pouce !",
+      "Vénus est la planète la plus brillante dans notre ciel. Les anciens pensaient que c'étaient deux étoiles différentes : une le matin, une le soir !",
+    ],
+    stats: [{ value: "465°C", label: "Température" }, { value: "12 104 km", label: "Diamètre" }, { value: "0", label: "Lunes" }]
+  },
+  {
+    name: "Terre", emoji: "🌍", subtitle: "Notre maison !",
+    size: 7, color: "radial-gradient(circle at 35% 35%, #7EC8E3, #4B9CD3 40%, #2E7D32 65%, #1B5E20)",
+    glow: "rgba(78,200,227,0.4)", accent: "#7EC8E3",
+    desc: "C'est ici qu'on habite ! La Terre est la seule planète qu'on connaît où il y a de la vie — des arbres, des poissons, des oiseaux, des insectes, des gens... et des chats ! C'est notre belle maison bleue dans l'espace. Elle est juste à la bonne distance du Soleil : ni trop chaud, ni trop froid. Les scientifiques appellent ça la « zone habitable ».",
+    funFacts: [
+      "Vue de l'espace, la Terre est surtout bleue parce qu'elle est recouverte de beaucoup, beaucoup d'eau. C'est pour ça qu'on l'appelle la planète bleue !",
+      "La Terre tourne sur elle-même à 1 670 km/h à l'équateur. On ne le sent pas, mais on tourne super vite en ce moment !",
+      "La Terre est la seule planète du système solaire dont le nom ne vient pas d'un dieu grec ou romain.",
+      "Si la Terre était de la taille d'une bille, la Lune serait comme un grain de poivre à 30 centimètres.",
+      "70% de la surface de la Terre est couverte d'eau, mais 97% de cette eau est salée ! On ne peut pas la boire.",
+      "La Terre a un bouclier invisible qui la protège : le champ magnétique. Sans lui, le vent solaire emporterait notre atmosphère !",
+      "Le point le plus profond de l'océan, la Fosse des Mariannes, est si profond qu'on pourrait y mettre le mont Everest et il resterait encore 2 km d'eau par-dessus !",
+    ],
+    stats: [{ value: "365", label: "Jours/an" }, { value: "12 742 km", label: "Diamètre" }, { value: "1 🌙", label: "Lune" }]
+  },
+  {
+    name: "Mars", emoji: "🔴", subtitle: "La planète rouge",
+    size: 4, color: "radial-gradient(circle at 35% 35%, #e8a87c, #c1440e 55%, #8b2500)",
+    glow: "rgba(193,68,14,0.4)", accent: "#e8a87c",
+    desc: "Mars est rouge à cause de la rouille ! Oui oui, comme quand du métal rouille dehors — le sol de Mars est plein de fer rouillé. Mars a le plus grand volcan du système solaire : le mont Olympus, trois fois plus haut que le mont Everest ! Et un canyon tellement grand qu'il pourrait traverser tout le Canada : Valles Marineris.",
+    funFacts: [
+      "On a envoyé des petits robots sur Mars pour explorer. Ils s'appellent des rovers. Un s'appelle Perseverance !",
+      "Mars a deux petites lunes qui s'appellent Phobos et Deimos. Elles ont des formes bizarres, comme des patates de l'espace !",
+      "Un jour sur Mars dure presque pareil que sur Terre : 24 heures et 37 minutes. Tu pourrais presque garder la même heure de dodo !",
+      "Mars a des saisons comme la Terre, parce qu'elle est penchée de la même façon. Mais chaque saison dure presque deux fois plus longtemps !",
+      "Le mont Olympus, le plus grand volcan de Mars, est tellement large que si tu étais dessus, tu ne verrais pas le bord — il dépasse l'horizon !",
+      "Des tempêtes de poussière sur Mars peuvent couvrir toute la planète ! Parfois, pendant des mois, on ne voit plus rien depuis l'espace.",
+      "Il y a de la glace sur Mars ! Aux pôles, il y a de la glace d'eau et de la glace de gaz carbonique — de la neige de CO2 !",
+    ],
+    stats: [{ value: "687", label: "Jours/an" }, { value: "6 779 km", label: "Diamètre" }, { value: "2", label: "Lunes" }]
+  },
+  {
+    name: "Jupiter", emoji: "🟤", subtitle: "La géante",
+    size: 80, color: "radial-gradient(circle at 35% 35%, #f5deb3, #d4a76a 30%, #c4853d 50%, #a0522d 70%, #d4a76a 85%)",
+    glow: "rgba(212,167,106,0.4)", accent: "#d4a76a", stripes: true,
+    desc: "Jupiter est la plus grosse planète ! Elle est tellement grande que toutes les autres planètes du système solaire pourraient rentrer dedans et il resterait encore de la place ! C'est une « géante gazeuse » : elle n'a pas de sol solide. Si tu essayais de marcher dessus, tu tomberais à travers les nuages ! Sa grosse tache rouge est une tempête gigantesque qui dure depuis des centaines d'années.",
+    funFacts: [
+      "Jupiter a au moins 95 lunes ! C'est comme avoir 95 petites sœurs et petits frères qui tournent autour de toi.",
+      "La Grande Tache Rouge de Jupiter est une tempête plus grosse que la Terre entière, et elle fait rage depuis au moins 350 ans !",
+      "Jupiter tourne sur elle-même en seulement 10 heures — c'est le jour le plus court de toutes les planètes ! Ça fait qu'elle est un peu aplatie.",
+      "Jupiter protège la Terre ! Sa gravité très forte attire les astéroïdes et les comètes qui pourraient nous tomber dessus. Merci Jupiter !",
+      "Une de ses lunes, Europe, a un océan d'eau liquide sous sa couche de glace. Peut-être qu'il y a de la vie là-dedans !",
+      "Si Jupiter avait été un peu plus grosse, elle serait devenue une étoile ! Il lui manquait juste un peu de masse.",
+      "Jupiter a des aurores boréales, comme au pôle Nord sur Terre, mais beaucoup plus grandes et plus puissantes !",
+      "Io, une lune de Jupiter, est l'endroit le plus volcanique du système solaire — il y a des éruptions tout le temps !",
+    ],
+    stats: [{ value: "12", label: "Années/tour" }, { value: "139 820 km", label: "Diamètre" }, { value: "95+", label: "Lunes" }]
+  },
+  {
+    name: "Saturne", emoji: "💍", subtitle: "La belle aux anneaux",
+    size: 67, color: "radial-gradient(circle at 35% 35%, #f5e6c8, #e8c97c 45%, #d4a745 75%)",
+    glow: "rgba(232,201,124,0.4)", accent: "#e8c97c", hasRing: true,
+    desc: "Saturne est célèbre pour ses magnifiques anneaux ! Ils sont faits de milliards et milliards de morceaux de glace et de roche — certains gros comme des maisons, d'autres petits comme des grains de sable — qui tournent autour d'elle. C'est la deuxième plus grosse planète, et beaucoup de gens disent que c'est la plus belle du système solaire !",
+    funFacts: [
+      "Saturne est tellement légère qu'elle flotterait dans une baignoire géante ! (Si on pouvait trouver une baignoire assez grande...)",
+      "Les anneaux de Saturne sont super larges (280 000 km !) mais super fins — parfois seulement 10 mètres d'épaisseur. Comme une feuille de papier géante !",
+      "Saturne a une lune appelée Titan qui est plus grosse que Mercure ! Titan a même des lacs et des rivières, mais ils sont faits de méthane liquide, pas d'eau.",
+      "Il pleut des diamants sur Saturne ! La pression est tellement forte que le carbone dans l'atmosphère se transforme en diamants qui tombent.",
+      "Saturne a une tempête bizarre à son pôle nord qui a la forme d'un hexagone (six côtés). Personne ne sait vraiment pourquoi !",
+      "Les anneaux de Saturne disparaissent lentement ! Dans environ 100 millions d'années, ils auront complètement disparu.",
+      "Saturne a au moins 146 lunes connues — c'est la planète qui en a le plus !",
+      "Encelade, une petite lune de Saturne, crache des geysers d'eau dans l'espace ! Il y a peut-être un océan chaud en dessous.",
+    ],
+    stats: [{ value: "29", label: "Années/tour" }, { value: "116 460 km", label: "Diamètre" }, { value: "146+", label: "Lunes" }]
+  },
+  {
+    name: "Uranus", emoji: "🧊", subtitle: "La couchée",
+    size: 29, color: "radial-gradient(circle at 35% 35%, #b8e8e8, #72c4c4 50%, #4a9a9a)",
+    glow: "rgba(114,196,196,0.4)", accent: "#72c4c4",
+    desc: "Uranus est une géante de glace qui tourne couchée sur le côté, comme si elle roulait autour du Soleil au lieu de tourner debout ! Quelque chose de très gros a dû la frapper il y a très longtemps pour la faire tomber comme ça. Elle est bleu-vert à cause du méthane dans son atmosphère, qui absorbe la lumière rouge.",
+    funFacts: [
+      "Uranus est tellement penchée qu'un de ses pôles pointe directement vers le Soleil pendant 42 ans, puis c'est l'autre pôle qui prend la relève !",
+      "Uranus a 13 anneaux fins et sombres — beaucoup moins spectaculaires que ceux de Saturne, mais ils sont là !",
+      "Uranus a été la première planète découverte avec un télescope, en 1781, par William Herschel.",
+      "Il fait environ -224°C sur Uranus. C'est une des planètes les plus froides du système solaire !",
+      "Les saisons sur Uranus durent 21 ans chacune ! Imagine 21 ans d'hiver...",
+      "Uranus a 28 lunes connues, et elles portent des noms de personnages de Shakespeare et d'Alexander Pope !",
+      "Il pleut probablement des diamants sur Uranus aussi, comme sur Saturne et Neptune.",
+    ],
+    stats: [{ value: "84", label: "Années/tour" }, { value: "50 724 km", label: "Diamètre" }, { value: "28", label: "Lunes" }]
+  },
+  {
+    name: "Neptune", emoji: "🔵", subtitle: "La mystérieuse",
+    size: 28, color: "radial-gradient(circle at 35% 35%, #6e9eff, #3a6fd8 50%, #1a3fa0)",
+    glow: "rgba(58,111,216,0.4)", accent: "#3a6fd8",
+    desc: "Neptune est la planète la plus éloignée du Soleil. Elle est d'un bleu magnifique et profond ! C'est aussi la planète des vents les plus forts de tout le système solaire — plus de 2 000 km/h ! Aucun ouragan sur Terre ne peut rivaliser. Neptune est si loin qu'on ne peut pas la voir à l'œil nu — il faut un télescope.",
+    funFacts: [
+      "Neptune est tellement loin que la lumière du Soleil met 4 heures pour y arriver. Ici, ça prend seulement 8 minutes !",
+      "Neptune a été trouvée grâce aux mathématiques ! Des scientifiques ont calculé qu'elle devait exister avant même de la voir dans un télescope.",
+      "Un an sur Neptune dure 165 ans terrestres ! Neptune a fait un seul tour du Soleil depuis qu'on l'a découverte en 1846.",
+      "Neptune a une grosse lune appelée Triton qui tourne à l'envers — dans le sens contraire de Neptune. On pense que Neptune l'a capturée !",
+      "Sur Triton, il y a des geysers qui crachent de l'azote gelé à des kilomètres de hauteur !",
+      "Les vents de Neptune peuvent aller jusqu'à 2 100 km/h. C'est presque deux fois la vitesse du son !",
+      "Neptune est bleue à cause du méthane dans son atmosphère, mais on ne sait pas exactement pourquoi elle est PLUS bleue qu'Uranus, qui a aussi du méthane.",
+      "Neptune avait une Grande Tache Sombre quand Voyager 2 l'a photographiée en 1989, mais quand Hubble a regardé en 1994, elle avait disparu !",
+    ],
+    stats: [{ value: "165", label: "Années/tour" }, { value: "49 244 km", label: "Diamètre" }, { value: "16", label: "Lunes" }]
+  }
+];
+
+// =====================================================
+// QUIZ — 55 questions, 12 per round
+// =====================================================
+const allQuizQuestions = [
+  // Biggest / Smallest / Closest / Farthest
+  { q: "Quelle est la plus GROSSE planète ?", answers: ["🟤 Jupiter", "💍 Saturne", "🌍 Terre", "🔴 Mars"], correct: 0 },
+  { q: "Quelle est la plus PETITE planète ?", answers: ["🔴 Mars", "🌍 Terre", "🪨 Mercure", "🌟 Vénus"], correct: 2 },
+  { q: "Quelle planète est la plus proche du Soleil ?", answers: ["🌟 Vénus", "🌍 Terre", "🪨 Mercure", "🔴 Mars"], correct: 2 },
+  { q: "Quelle planète est la plus LOIN du Soleil ?", answers: ["💍 Saturne", "🧊 Uranus", "🔵 Neptune", "🟤 Jupiter"], correct: 2 },
+  { q: "Quelle est la deuxième plus grosse planète ?", answers: ["🟤 Jupiter", "💍 Saturne", "🧊 Uranus", "🔵 Neptune"], correct: 1 },
+
+  // Colors
+  { q: "De quelle couleur est Mars ?", answers: ["🔵 Bleue", "🟢 Verte", "🔴 Rouge", "🟡 Jaune"], correct: 2 },
+  { q: "Pourquoi la Terre est bleue vue de l'espace ?", answers: ["🎨 De la peinture", "💧 Beaucoup d'eau", "🧊 De la glace", "☁️ Des nuages"], correct: 1 },
+  { q: "De quelle couleur est Neptune ?", answers: ["🔴 Rouge", "🟢 Verte", "🔵 Bleue", "🟡 Jaune"], correct: 2 },
+  { q: "Pourquoi Mars est rouge ?", answers: ["🌋 Du feu", "🧱 De la rouille", "🎨 De la peinture", "🌺 Des fleurs"], correct: 1 },
+
+  // The Sun
+  { q: "Qu'est-ce que le Soleil ?", answers: ["🪨 Une planète", "⭐ Une étoile", "🌙 Une lune", "☄️ Une comète"], correct: 1 },
+  { q: "De quoi est fait le Soleil ?", answers: ["🪨 De roche", "🔥 De feu", "💨 De gaz très chaud", "🧊 De glace"], correct: 2 },
+  { q: "En combien de temps la lumière du Soleil arrive sur Terre ?", answers: ["⚡ 1 seconde", "⏱️ 8 minutes", "⏰ 1 heure", "📅 1 jour"], correct: 1 },
+
+  // Earth
+  { q: "Sur quelle planète est-ce qu'on habite ?", answers: ["🔴 Mars", "🌟 Vénus", "🌍 La Terre", "🪨 Mercure"], correct: 2 },
+  { q: "Combien de lunes a la Terre ?", answers: ["🌙 Une seule", "🌙🌙 Deux", "❌ Aucune", "🌙🌙🌙 Trois"], correct: 0 },
+  { q: "Combien de jours dans une année sur Terre ?", answers: ["📅 100 jours", "📅 365 jours", "📅 88 jours", "📅 687 jours"], correct: 1 },
+  { q: "Qu'est-ce qui protège la Terre du vent solaire ?", answers: ["☁️ Les nuages", "🧲 Le champ magnétique", "🌊 L'océan", "🌳 Les arbres"], correct: 1 },
+
+  // Saturn
+  { q: "Quelle planète a de beaux anneaux ?", answers: ["🟤 Jupiter", "🌍 Terre", "🔵 Neptune", "💍 Saturne"], correct: 3 },
+  { q: "De quoi sont faits les anneaux de Saturne ?", answers: ["🌈 De lumière", "🧊 De glace et roche", "💨 De gaz", "🔥 De feu"], correct: 1 },
+  { q: "Saturne flotterait dans quoi ?", answers: ["🛁 Une baignoire d'eau", "🍯 Du miel", "🪨 Du sable", "🔥 De la lave"], correct: 0 },
+  { q: "Quelle forme a la tempête au pôle nord de Saturne ?", answers: ["⭕ Un cercle", "⬡ Un hexagone", "△ Un triangle", "⬜ Un carré"], correct: 1 },
+  { q: "Qu'est-ce qui pleut sur Saturne ?", answers: ["💧 De l'eau", "💎 Des diamants", "🍬 Des bonbons", "❄️ De la neige"], correct: 1 },
+  { q: "Quelle planète a le plus de lunes ?", answers: ["🟤 Jupiter", "💍 Saturne", "🧊 Uranus", "🔵 Neptune"], correct: 1 },
+
+  // Jupiter
+  { q: "Qu'est-ce que la Grande Tache Rouge de Jupiter ?", answers: ["🌋 Un volcan", "🌪️ Une tempête", "🏝️ Une île", "🎨 Une tache de peinture"], correct: 1 },
+  { q: "Combien de lunes a Jupiter ?", answers: ["🌙 2", "🌙 10", "🌙 95+", "🌙 0"], correct: 2 },
+  { q: "Pourquoi Jupiter protège la Terre ?", answers: ["☂️ Avec un parapluie", "💪 Sa gravité attire les astéroïdes", "🛡️ Un bouclier magique", "💨 Elle souffle dessus"], correct: 1 },
+  { q: "Combien d'heures dure un jour sur Jupiter ?", answers: ["⏱️ 10 heures", "⏱️ 24 heures", "⏱️ 100 heures", "⏱️ 365 heures"], correct: 0 },
+  { q: "Est-ce qu'on peut marcher sur Jupiter ?", answers: ["✅ Oui !", "❌ Non, c'est du gaz", "🤔 Peut-être", "👟 Avec des chaussures spéciales"], correct: 1 },
+
+  // Mars
+  { q: "Comment s'appellent les robots qu'on a envoyés sur Mars ?", answers: ["🤖 Des rovers", "🚗 Des voitures", "✈️ Des avions", "🚁 Des hélicos"], correct: 0 },
+  { q: "Combien de lunes a Mars ?", answers: ["🌙 0", "🌙 1", "🌙 2", "🌙 4"], correct: 2 },
+  { q: "Comment s'appelle le plus grand volcan de Mars ?", answers: ["🌋 Everest", "🌋 Olympus", "🌋 Vésuve", "🌋 Fuji"], correct: 1 },
+  { q: "Quelle forme ont les lunes de Mars ?", answers: ["⚽ Rondes", "🥔 Comme des patates", "⭐ En étoile", "🧊 Carrées"], correct: 1 },
+  { q: "Qu'est-ce qu'il y a aux pôles de Mars ?", answers: ["🌊 De l'eau liquide", "🧊 De la glace", "🏖️ Du sable chaud", "🌳 Des arbres"], correct: 1 },
+
+  // Venus
+  { q: "Quelle planète est la plus CHAUDE ?", answers: ["🪨 Mercure", "🌟 Vénus", "🔴 Mars", "🟤 Jupiter"], correct: 1 },
+  { q: "Comment appelle-t-on Vénus le soir ?", answers: ["🌟 L'étoile du berger", "🌙 La petite lune", "☀️ Le mini soleil", "💫 L'étoile filante"], correct: 0 },
+  { q: "Dans quel sens tourne Vénus ?", answers: ["➡️ Comme les autres", "⬅️ À l'envers", "⬆️ De haut en bas", "🔄 Elle ne tourne pas"], correct: 1 },
+  { q: "Quelle planète est la jumelle de la Terre en taille ?", answers: ["🪨 Mercure", "🌟 Vénus", "🔴 Mars", "🔵 Neptune"], correct: 1 },
+  { q: "Qu'est-ce qui tombe du ciel sur Vénus ?", answers: ["💧 De l'eau", "☁️ De la pluie d'acide", "🍫 Du chocolat", "❄️ De la neige"], correct: 1 },
+
+  // Mercury
+  { q: "Quelle planète fait le tour du Soleil le plus vite ?", answers: ["🌍 Terre", "🪨 Mercure", "🌟 Vénus", "🔴 Mars"], correct: 1 },
+  { q: "Combien de jours dure un an sur Mercure ?", answers: ["📅 365 jours", "📅 88 jours", "📅 687 jours", "📅 225 jours"], correct: 1 },
+  { q: "Mercure ressemble à quoi ?", answers: ["🌍 La Terre", "🌙 Notre Lune", "🟤 Jupiter", "💍 Saturne"], correct: 1 },
+
+  // Uranus
+  { q: "Quelle planète tourne couchée sur le côté ?", answers: ["🔵 Neptune", "🧊 Uranus", "💍 Saturne", "🟤 Jupiter"], correct: 1 },
+  { q: "Combien d'anneaux a Uranus ?", answers: ["❌ Aucun", "💍 13", "💍 1", "💍 100"], correct: 1 },
+  { q: "Combien de temps dure une saison sur Uranus ?", answers: ["📅 3 mois", "📅 1 an", "📅 21 ans", "📅 84 ans"], correct: 2 },
+  { q: "De quoi viennent les noms des lunes d'Uranus ?", answers: ["🐱 Des chats", "📚 De Shakespeare", "🎵 De chansons", "🍕 De pizzas"], correct: 1 },
+
+  // Neptune
+  { q: "Quelle planète a les vents les plus forts ?", answers: ["🟤 Jupiter", "🔵 Neptune", "💍 Saturne", "🌍 Terre"], correct: 1 },
+  { q: "Comment a-t-on trouvé Neptune ?", answers: ["🔭 Par hasard", "🧮 Grâce aux maths", "🛸 Des aliens", "📷 Une photo"], correct: 1 },
+  { q: "Combien de temps met Neptune pour tourner autour du Soleil ?", answers: ["📅 84 ans", "📅 165 ans", "📅 12 ans", "📅 29 ans"], correct: 1 },
+  { q: "Comment s'appelle la grosse lune de Neptune ?", answers: ["🌙 Titan", "🌙 Europe", "🌙 Triton", "🌙 Phobos"], correct: 2 },
+
+  // General / Comparisons
+  { q: "Combien y a-t-il de planètes dans le système solaire ?", answers: ["🔢 7", "🔢 8", "🔢 9", "🔢 10"], correct: 1 },
+  { q: "Comment appelle-t-on les planètes géantes faites de gaz ?", answers: ["🪨 Planètes rocheuses", "💨 Géantes gazeuses", "🧊 Géantes glacées", "🔥 Planètes de feu"], correct: 1 },
+  { q: "Quelle planète a un jour qui dure seulement 10 heures ?", answers: ["🌍 Terre", "🔴 Mars", "🟤 Jupiter", "🌟 Vénus"], correct: 2 },
+  { q: "Quelle planète a le jour le plus LONG ?", answers: ["🟤 Jupiter", "🌟 Vénus", "🪨 Mercure", "🔵 Neptune"], correct: 1 },
+  { q: "Où pourrait-il y avoir un océan caché sous la glace ?", answers: ["🔴 Mars", "🌙 Europe (lune de Jupiter)", "🌟 Vénus", "🪨 Mercure"], correct: 1 },
+  { q: "Quelle est la planète la plus froide ?", answers: ["🔵 Neptune", "🧊 Uranus", "🪨 Mercure", "💍 Saturne"], correct: 1 },
+  { q: "Qu'est-ce qu'une étoile filante ?", answers: ["⭐ Une étoile qui tombe", "☄️ Un caillou qui brûle dans l'air", "🛸 Un vaisseau spatial", "🌙 Une lune rapide"], correct: 1 },
+  { q: "Quel est l'endroit le plus volcanique du système solaire ?", answers: ["🌍 La Terre", "🔴 Mars", "🌙 Io (lune de Jupiter)", "🌟 Vénus"], correct: 2 },
+];
+
+const QUESTIONS_PER_ROUND = 12;
+
+// =====================================================
+// HELPERS
+// =====================================================
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+// =====================================================
+// STATE
+// =====================================================
+let mode = 'explore';
+let quizOrder = [], quizIndex = 0, quizScore = 0, quizAnswered = false;
+let voiceEnabled = false;
+let frenchVoice = null;
+
+// =====================================================
+// SPEECH SYNTHESIS
+// =====================================================
+function initVoices() {
+  const voices = speechSynthesis.getVoices();
+  // Prefer a French voice, ideally female for storytelling feel
+  frenchVoice = voices.find(v => v.lang.startsWith('fr') && v.name.toLowerCase().includes('amelie'))
+    || voices.find(v => v.lang.startsWith('fr') && v.name.toLowerCase().includes('thomas'))
+    || voices.find(v => v.lang.startsWith('fr') && !v.name.toLowerCase().includes('compact'))
+    || voices.find(v => v.lang.startsWith('fr'))
+    || null;
+}
+
+// Voices load async on some browsers
+if (speechSynthesis.getVoices().length) initVoices();
+speechSynthesis.addEventListener('voiceschanged', initVoices);
+
+function speak(text) {
+  if (!voiceEnabled || !text) return;
+  speechSynthesis.cancel();
+  // Strip emojis for cleaner speech
+  const clean = text.replace(/[\u{1F000}-\u{1FFFF}]|[\u{2600}-\u{27BF}]|[\u{FE00}-\u{FEFF}]|[\u200D]|[⭐☆⬡△⬜⭕❌✅⬅➡⬆🔄]/gu, '').replace(/\s+/g, ' ').trim();
+  if (!clean) return;
+
+  const utter = new SpeechSynthesisUtterance(clean);
+  utter.lang = 'fr-FR';
+  if (frenchVoice) utter.voice = frenchVoice;
+  utter.rate = 0.9;  // Slightly slower for a kid
+  utter.pitch = 1.05;
+  speechSynthesis.speak(utter);
+}
+
+function stopSpeech() {
+  speechSynthesis.cancel();
+}
+
+function toggleVoice() {
+  voiceEnabled = !voiceEnabled;
+  const btn = document.getElementById('btnVoice');
+  const icon = document.getElementById('voiceIcon');
+  btn.classList.toggle('active', voiceEnabled);
+  icon.textContent = voiceEnabled ? '🔊' : '🔇';
+
+  if (!voiceEnabled) {
+    stopSpeech();
+  } else {
+    // Quick test so user knows it works (also triggers iOS audio permission)
+    speak("La voix est activée !");
+  }
+}
+
+// =====================================================
+// STARS & SHOOTING STARS
+// =====================================================
+const starsEl = document.getElementById('stars');
+for (let i = 0; i < 200; i++) {
+  const s = document.createElement('div');
+  s.className = 'star';
+  const sz = Math.random() * 2.5 + 0.5;
+  s.style.cssText = `width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;animation:twinkle ${2+Math.random()*4}s ease-in-out infinite;animation-delay:${Math.random()*5}s;opacity:${0.3+Math.random()*0.7};`;
+  starsEl.appendChild(s);
+}
+
+function launchShootingStar() {
+  const s = document.createElement('div');
+  s.className = 'shooting-star';
+  s.style.top = Math.random()*40+'%';
+  s.style.left = (40+Math.random()*60)+'%';
+  s.style.animation = `shoot ${0.8+Math.random()*0.5}s linear forwards`;
+  document.body.appendChild(s);
+  setTimeout(() => s.remove(), 1500);
+  setTimeout(launchShootingStar, 4000+Math.random()*8000);
+}
+setTimeout(launchShootingStar, 2000);
+
+// =====================================================
+// BUILD SOLAR SYSTEM
+// =====================================================
+const solarSystem = document.getElementById('solarSystem');
+bodies.forEach((body, i) => {
+  if (body.isSun) {
+    const sun = document.createElement('div');
+    sun.className = 'sun'; sun.title = 'Le Soleil';
+    sun.addEventListener('click', () => selectBody(i, sun));
+    solarSystem.appendChild(sun);
+  } else {
+    const w = document.createElement('div');
+    w.className = 'planet-wrapper';
+    w.style.setProperty('--glow-color', body.glow);
+    if (body.size < 10) w.dataset.tiny = 'true';
+
+    const p = document.createElement('div');
+    p.className = 'planet';
+    p.style.width = body.size+'px'; p.style.height = body.size+'px';
+    p.style.background = body.color;
+
+    if (body.hasRing) {
+      const r = document.createElement('div');
+      r.className = 'saturn-ring'; p.style.position = 'relative';
+      p.appendChild(r);
+    }
+    if (body.stripes) {
+      p.style.backgroundImage = `${body.color},repeating-linear-gradient(0deg,transparent,transparent 4px,rgba(139,69,19,0.15) 4px,rgba(139,69,19,0.15) 6px)`;
+    }
+
+    const n = document.createElement('div');
+    n.className = 'planet-name'; n.textContent = body.name;
+
+    w.appendChild(p); w.appendChild(n);
+    w.addEventListener('click', () => selectBody(i, w));
+    solarSystem.appendChild(w);
+  }
+});
+
+// =====================================================
+// EXPLORE MODE
+// =====================================================
+let activeEl = null;
+
+function selectBody(index, element) {
+  if (mode !== 'explore') return;
+  if (activeEl) activeEl.classList.remove('active');
+  element.classList.add('active'); activeEl = element;
+
+  const body = bodies[index];
+  const fact = pick(body.funFacts);
+  const card = document.getElementById('infoCard');
+
+  card.innerHTML = `
+    <div class="card" style="--accent: ${body.accent}">
+      <div class="card-header">
+        <span class="card-emoji">${body.emoji}</span>
+        <div>
+          <div class="card-title">${body.nameFr || body.name}</div>
+          <div class="card-subtitle">${body.subtitle}</div>
+        </div>
+      </div>
+      <div class="card-body">${body.desc}</div>
+      <div class="fun-fact">
+        <div class="fun-fact-label">🤩 Le savais-tu ?</div>
+        ${fact}
+      </div>
+      <div class="stats">${body.stats.map(s => `
+        <div class="stat"><div class="stat-value">${s.value}</div><div class="stat-label">${s.label}</div></div>
+      `).join('')}</div>
+      <div class="tap-hint">Reclique pour un autre fait amusant !</div>
+    </div>`;
+
+  // Speak the name, description, and fun fact
+  speak(`${body.nameFr || body.name}. ${body.desc} ... Le savais-tu ? ${fact}`);
+}
+
+// =====================================================
+// MODE SWITCHING
+// =====================================================
+function setMode(m) {
+  mode = m;
+  stopSpeech();
+  document.getElementById('btnExplore').classList.toggle('active', m === 'explore');
+  document.getElementById('btnQuiz').classList.toggle('active', m === 'quiz');
+  if (activeEl) { activeEl.classList.remove('active'); activeEl = null; }
+
+  if (m === 'explore') {
+    document.getElementById('headerSub').textContent = 'Clique sur une planète pour la découvrir !';
+    document.getElementById('infoCard').innerHTML = `
+      <div class="card prompt-card">
+        <span class="prompt-emoji">👆</span>
+        <p>Choisis le Soleil ou une planète<br>pour apprendre des choses super cool !</p>
+      </div>`;
+  } else {
+    document.getElementById('headerSub').textContent = 'Montre ce que tu sais !';
+    startQuiz();
+  }
+}
+
+// =====================================================
+// QUIZ
+// =====================================================
+function startQuiz() {
+  quizOrder = shuffle(allQuizQuestions).slice(0, QUESTIONS_PER_ROUND);
+  quizIndex = 0; quizScore = 0;
+  showQuestion();
+}
+
+function showQuestion() {
+  if (quizIndex >= quizOrder.length) { finishQuiz(); return; }
+  quizAnswered = false;
+  const q = quizOrder[quizIndex];
+  const stars = '⭐'.repeat(quizScore) + '☆'.repeat(quizIndex - quizScore);
+
+  document.getElementById('infoCard').innerHTML = `
+    <div class="card" style="--accent: #FFD93D">
+      <div class="quiz-score">
+        <div class="quiz-score-text">Question ${quizIndex+1} sur ${quizOrder.length}</div>
+        ${quizIndex > 0 ? `<div class="quiz-stars">${stars}</div>` : ''}
+      </div>
+      <div class="quiz-question">${q.q}</div>
+      <div class="quiz-answers">
+        ${q.answers.map((a, i) => `<button class="quiz-btn" onclick="answerQuiz(${i})" id="qbtn${i}">${a}</button>`).join('')}
+      </div>
+      <div class="quiz-feedback" id="quizFeedback"></div>
+      <div style="text-align:center">
+        <button class="quiz-next" id="quizNext" onclick="nextQuestion()">Prochaine question →</button>
+      </div>
+    </div>`;
+
+  // Read the question aloud
+  speak(q.q);
+}
+
+const successMsgs = [
+  "🌟 Super ! Tu es une vraie astronaute !",
+  "🚀 Génial ! Tu connais bien l'espace !",
+  "⭐ Bravo ! C'est la bonne réponse !",
+  "🎉 Parfait ! Tu es trop forte !",
+  "🌟 Oui ! Excellente réponse !",
+  "🪐 Wow ! Tu connais tes planètes !",
+  "✨ Incroyable ! Tu as raison !",
+  "🌙 Yes ! Tu es une experte de l'espace !",
+  "🔭 Magnifique ! Bonne réponse !",
+  "💫 Champion ! Tu as tout bon !",
+];
+
+const encourageMsgs = [
+  "Presque ! La bonne réponse est en vert 💚",
+  "Pas tout à fait ! Regarde en vert 💚",
+  "Oh ! C'était difficile celle-là ! 💚",
+  "Bonne tentative ! La réponse est en vert 💚",
+  "Pas grave ! On apprend en essayant 💚",
+  "C'était un piège ! Regarde la réponse en vert 💚",
+];
+
+function answerQuiz(choice) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+  const q = quizOrder[quizIndex];
+  const feedback = document.getElementById('quizFeedback');
+  const nextBtn = document.getElementById('quizNext');
+
+  for (let i = 0; i < q.answers.length; i++) {
+    document.getElementById('qbtn'+i).classList.add(i === q.correct ? 'correct' : 'wrong');
+  }
+
+  if (choice === q.correct) {
+    quizScore++;
+    feedback.className = 'quiz-feedback success';
+    const msg = pick(successMsgs);
+    feedback.textContent = msg;
+    speak(msg);
+  } else {
+    feedback.className = 'quiz-feedback encourage';
+    const msg = pick(encourageMsgs);
+    feedback.textContent = msg;
+    const correctAnswer = q.answers[q.correct].replace(/[\u{1F000}-\u{1FFFF}]|[\u{2600}-\u{27BF}]/gu, '').trim();
+    speak(msg + " C'était : " + correctAnswer);
+  }
+
+  nextBtn.classList.add('visible');
+  if (quizIndex >= quizOrder.length - 1) nextBtn.textContent = "Voir mes étoiles ! ⭐";
+}
+
+function nextQuestion() { quizIndex++; showQuestion(); }
+
+function finishQuiz() {
+  const total = quizOrder.length;
+  const pct = quizScore / total;
+  let emoji, msg, sub;
+
+  if (pct === 1) {
+    emoji = "🏆🌟🚀"; msg = "PARFAIT ! Super astronaute !";
+    sub = `${quizScore}/${total} — Toutes les bonnes réponses !`;
+  } else if (pct >= 0.8) {
+    emoji = "🌟🚀✨"; msg = "Bravo, c'est super !";
+    sub = `${quizScore}/${total} étoiles — Tu connais bien l'espace !`;
+  } else if (pct >= 0.5) {
+    emoji = "🚀💪✨"; msg = "Beau travail !";
+    sub = `${quizScore}/${total} étoiles — Tu apprends vite !`;
+  } else {
+    emoji = "🌟📚🚀"; msg = "Belle tentative !";
+    sub = `${quizScore}/${total} étoiles — Explore les planètes et réessaie !`;
+  }
+
+  document.getElementById('celebEmoji').textContent = emoji;
+  document.getElementById('celebText').textContent = msg;
+  document.getElementById('celebSub').textContent = sub;
+  document.getElementById('celebration').classList.add('active');
+  launchConfetti();
+  speak(`${msg} ${sub}`);
+}
+
+function closeCelebration(nextMode) {
+  stopSpeech();
+  document.getElementById('celebration').classList.remove('active');
+  setMode(nextMode || 'explore');
+}
+
+function launchConfetti() {
+  const colors = ['#FFD93D','#FF6B6B','#4ECDC4','#A78BFA','#FF8C00','#81C784','#64B5F6'];
+  for (let i = 0; i < 60; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.left = Math.random()*100+'%'; p.style.top = '-10px';
+    p.style.background = colors[Math.floor(Math.random()*colors.length)];
+    p.style.width = (6+Math.random()*8)+'px'; p.style.height = (6+Math.random()*8)+'px';
+    p.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    p.style.animation = `confettiFall ${1.5+Math.random()*2}s ease-out forwards`;
+    p.style.animationDelay = Math.random()*0.8+'s';
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 4000);
+  }
+}
+</script>
+</body>
+</html>

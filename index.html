@@ -4,6 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Le Système Solaire d'Adélie ✨</title>
+<meta name="description" content="Explore le système solaire avec Adélie : découvre le Soleil et les 8 planètes, écoute-les en français, et teste tes connaissances avec un quiz amusant pour les enfants.">
+<meta name="theme-color" content="#0a0e27">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Système Solaire">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Baloo+2:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -16,6 +26,10 @@
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  /* Clear, kid-friendly focus ring for keyboard users */
+  :focus-visible { outline: 3px solid #64C8FF; outline-offset: 3px; border-radius: 8px; }
+  .planet-wrapper:focus-visible, .sun:focus-visible { outline-offset: 6px; }
 
   body {
     font-family: 'Fredoka', sans-serif;
@@ -306,6 +320,17 @@
     10% { opacity: 1; } 90% { opacity: 1; }
     100% { opacity: 0; transform: translate(-400px, 200px); }
   }
+
+  /* Respect users who prefer less motion: keep it calm, no looping animation */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+    .star { opacity: 0.7 !important; }
+  }
 </style>
 </head>
 <body>
@@ -368,7 +393,7 @@ const bodies = [
     name: "Mercure", emoji: "🪨", subtitle: "La plus rapide",
     size: 3, color: "radial-gradient(circle at 35% 35%, #b8b8b8, #8a8a8a 60%, #5a5a5a)",
     glow: "rgba(180,180,180,0.4)", accent: "#b8b8b8",
-    desc: "Mercure est la planète la plus proche du Soleil et la plus petite de toutes ! Elle fait le tour du Soleil super vite — en seulement 88 jours, c'est la championne de la course ! Mais elle tourne très lentement sur elle-même. Un seul jour sur Mercure dure 59 jours terrestres ! Imagine : tu attendrais presque deux mois pour voir un coucher de soleil.",
+    desc: "Mercure est la planète la plus proche du Soleil et la plus petite de toutes ! Elle fait le tour du Soleil super vite — en seulement 88 jours, c'est la championne de la course ! Mais elle tourne très lentement sur elle-même : un tour complet prend 59 jours terrestres. Et comme elle avance aussi autour du Soleil, il se passe 176 jours entre deux levers de soleil — presque six mois à attendre pour revoir le Soleil se lever !",
     funFacts: [
       "Sur Mercure, le jour c'est brûlant (430°C) et la nuit c'est glacial (-180°C). Brrr et Aïe en même temps !",
       "Mercure est couverte de cratères, comme notre Lune. Des roches de l'espace lui sont tombées dessus pendant des milliards d'années !",
@@ -596,6 +621,23 @@ function shuffle(arr) {
 
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
+// Some kids (and grown-ups) are sensitive to motion — check once.
+const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Make a non-button element behave like a button for keyboard & screen readers.
+function makeInteractive(el, label, onActivate) {
+  el.setAttribute('role', 'button');
+  el.setAttribute('tabindex', '0');
+  el.setAttribute('aria-label', label);
+  el.addEventListener('click', onActivate);
+  el.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+      e.preventDefault();
+      onActivate();
+    }
+  });
+}
+
 // =====================================================
 // STATE
 // =====================================================
@@ -609,7 +651,8 @@ let frenchVoice = null;
 // =====================================================
 function initVoices() {
   const voices = speechSynthesis.getVoices();
-  // Prefer a French voice, ideally female for storytelling feel
+  // Prefer a specific good-quality French voice (Amélie, then Thomas),
+  // then any non-"compact" French voice, then any French voice at all.
   frenchVoice = voices.find(v => v.lang.startsWith('fr') && v.name.toLowerCase().includes('amelie'))
     || voices.find(v => v.lang.startsWith('fr') && v.name.toLowerCase().includes('thomas'))
     || voices.find(v => v.lang.startsWith('fr') && !v.name.toLowerCase().includes('compact'))
@@ -677,7 +720,7 @@ function launchShootingStar() {
   setTimeout(() => s.remove(), 1500);
   setTimeout(launchShootingStar, 4000+Math.random()*8000);
 }
-setTimeout(launchShootingStar, 2000);
+if (!reduceMotion) setTimeout(launchShootingStar, 2000);
 
 // =====================================================
 // BUILD SOLAR SYSTEM
@@ -687,7 +730,7 @@ bodies.forEach((body, i) => {
   if (body.isSun) {
     const sun = document.createElement('div');
     sun.className = 'sun'; sun.title = 'Le Soleil';
-    sun.addEventListener('click', () => selectBody(i, sun));
+    makeInteractive(sun, 'Le Soleil, notre étoile', () => selectBody(i, sun));
     solarSystem.appendChild(sun);
   } else {
     const w = document.createElement('div');
@@ -713,7 +756,7 @@ bodies.forEach((body, i) => {
     n.className = 'planet-name'; n.textContent = body.name;
 
     w.appendChild(p); w.appendChild(n);
-    w.addEventListener('click', () => selectBody(i, w));
+    makeInteractive(w, `${body.name}${body.subtitle ? ', ' + body.subtitle : ''}`, () => selectBody(i, w));
     solarSystem.appendChild(w);
   }
 });
@@ -804,7 +847,7 @@ function showQuestion() {
       <div class="quiz-answers">
         ${q.answers.map((a, i) => `<button class="quiz-btn" onclick="answerQuiz(${i})" id="qbtn${i}">${a}</button>`).join('')}
       </div>
-      <div class="quiz-feedback" id="quizFeedback"></div>
+      <div class="quiz-feedback" id="quizFeedback" role="status" aria-live="polite"></div>
       <div style="text-align:center">
         <button class="quiz-next" id="quizNext" onclick="nextQuestion()">Prochaine question →</button>
       </div>
@@ -886,12 +929,24 @@ function finishQuiz() {
     sub = `${quizScore}/${total} étoiles — Explore les planètes et réessaie !`;
   }
 
+  // Personal best, remembered on this device
+  let best = 0;
+  try { best = parseInt(localStorage.getItem('adelie-quiz-best') || '0', 10) || 0; } catch (e) {}
+  const isRecord = quizScore > best;
+  if (isRecord) {
+    best = quizScore;
+    try { localStorage.setItem('adelie-quiz-best', String(best)); } catch (e) {}
+  }
+  const recordLine = isRecord && quizScore > 0
+    ? '🎉 Nouveau record !'
+    : `⭐ Ton record : ${best}/${total}`;
+
   document.getElementById('celebEmoji').textContent = emoji;
   document.getElementById('celebText').textContent = msg;
-  document.getElementById('celebSub').textContent = sub;
+  document.getElementById('celebSub').innerHTML = `${sub}<br><span style="color:rgba(255,255,255,0.5); font-size:0.9rem">${recordLine}</span>`;
   document.getElementById('celebration').classList.add('active');
   launchConfetti();
-  speak(`${msg} ${sub}`);
+  speak(`${msg} ${sub} ${recordLine}`);
 }
 
 function closeCelebration(nextMode) {
@@ -901,6 +956,7 @@ function closeCelebration(nextMode) {
 }
 
 function launchConfetti() {
+  if (reduceMotion) return;
   const colors = ['#FFD93D','#FF6B6B','#4ECDC4','#A78BFA','#FF8C00','#81C784','#64B5F6'];
   for (let i = 0; i < 60; i++) {
     const p = document.createElement('div');
@@ -914,6 +970,15 @@ function launchConfetti() {
     document.body.appendChild(p);
     setTimeout(() => p.remove(), 4000);
   }
+}
+
+// =====================================================
+// OFFLINE SUPPORT — install & cache so it works without wifi
+// =====================================================
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => { /* offline support is a bonus, ignore failures */ });
+  });
 }
 </script>
 </body>

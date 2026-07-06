@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Le Système Solaire d'Adélie">
+  <defs>
+    <radialGradient id="sun" cx="42%" cy="42%" r="65%">
+      <stop offset="0%" stop-color="#FFF7AE"/>
+      <stop offset="40%" stop-color="#FFD93D"/>
+      <stop offset="75%" stop-color="#FF8C00"/>
+      <stop offset="100%" stop-color="#CC5500"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FF8C00" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#FF8C00" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- space background (full bleed for maskable icons) -->
+  <rect width="512" height="512" fill="#0a0e27"/>
+  <!-- a few stars -->
+  <circle cx="90" cy="110" r="3" fill="#f0f0ff" opacity="0.8"/>
+  <circle cx="420" cy="90" r="2.5" fill="#f0f0ff" opacity="0.7"/>
+  <circle cx="440" cy="380" r="3" fill="#f0f0ff" opacity="0.8"/>
+  <circle cx="120" cy="410" r="2" fill="#f0f0ff" opacity="0.6"/>
+  <circle cx="380" cy="200" r="2" fill="#f0f0ff" opacity="0.6"/>
+  <!-- sun glow + sun -->
+  <circle cx="256" cy="256" r="180" fill="url(#glow)"/>
+  <circle cx="256" cy="256" r="120" fill="url(#sun)"/>
+  <!-- orbit + planet -->
+  <ellipse cx="256" cy="256" rx="200" ry="200" fill="none" stroke="#ffffff" stroke-opacity="0.12" stroke-width="4"/>
+  <circle cx="256" cy="56" r="22" fill="#4B9CD3"/>
+  <circle cx="250" cy="50" r="8" fill="#7EC8E3" opacity="0.9"/>
+</svg>

@@ -34,8 +34,9 @@ Ouvre simplement `index.html` dans un navigateur, ou visite la version en ligne 
 ## La voix
 
 Les textes sont lus avec des clips audio pré-générés par [`edge-tts`](https://github.com/rany2/edge-tts)
-(voix neuronales de Microsoft Edge — gratuit, sans clé d'API). Comme le contenu est fixe,
-la voix est identique et naturelle sur tous les appareils, et fonctionne hors ligne.
+(voix neuronales de Microsoft Edge — gratuit, sans clé d'API), avec la voix québécoise
+**`fr-CA-SylvieNeural`** par défaut. Comme le contenu est fixe, la voix est identique et
+naturelle sur tous les appareils, et fonctionne hors ligne.
 
 Pour (re)générer les clips après avoir modifié un texte de `index.html` :
 
@@ -43,7 +44,7 @@ Pour (re)générer les clips après avoir modifié un texte de `index.html` :
 pip install edge-tts          # une seule fois
 node tools/gen_audio.mjs       # génère les clips manquants dans audio/
 FORCE=1 node tools/gen_audio.mjs           # tout régénérer
-TTS_VOICE=fr-CA-SylvieNeural node tools/gen_audio.mjs   # autre voix
+TTS_VOICE=fr-FR-DeniseNeural node tools/gen_audio.mjs   # autre voix (France)
 ```
 
 Le script lit les textes directement depuis `index.html`, donc l'audio ne peut pas

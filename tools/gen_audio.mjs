@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const AUDIO_DIR = path.join(ROOT, 'audio');
-const VOICE = process.env.TTS_VOICE || 'fr-FR-DeniseNeural';
+const VOICE = process.env.TTS_VOICE || 'fr-CA-SylvieNeural';
 const RATE = process.env.TTS_RATE || '-8%';       // a touch slower, for a child
 const FORCE = !!process.env.FORCE;
 const CONCURRENCY = 6;

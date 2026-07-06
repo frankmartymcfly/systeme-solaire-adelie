@@ -1,7 +1,7 @@
 // Service worker for "Le Système Solaire d'Adélie"
 // Caches the app so it keeps working with no wifi (e.g. in the car or a plane).
 // Bump CACHE_VERSION whenever index.html or assets change to push an update.
-const CACHE_VERSION = 'sys-solaire-v1';
+const CACHE_VERSION = 'sys-solaire-v2';
 
 // The app shell — cached up front on install.
 const APP_SHELL = [
@@ -9,11 +9,20 @@ const APP_SHELL = [
   './index.html',
   './icon.svg',
   './manifest.webmanifest',
+  './audio/manifest.json',
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_VERSION).then((cache) => cache.addAll(APP_SHELL))
+    caches.open(CACHE_VERSION).then(async (cache) => {
+      await cache.addAll(APP_SHELL);
+      // Best-effort: pre-cache all voice clips so the app also talks offline.
+      // Never let this fail the install (e.g. if generated audio is missing).
+      try {
+        const ids = await (await fetch('./audio/manifest.json')).json();
+        await cache.addAll(ids.map((id) => `./audio/${id}.mp3`));
+      } catch (e) { /* clips will still be cached on first play */ }
+    })
   );
   self.skipWaiting();
 });

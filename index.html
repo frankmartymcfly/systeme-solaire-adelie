@@ -651,18 +651,78 @@ let frenchVoice = null;
 // =====================================================
 function initVoices() {
   const voices = speechSynthesis.getVoices();
-  // Prefer a specific good-quality French voice (Amélie, then Thomas),
-  // then any non-"compact" French voice, then any French voice at all.
-  frenchVoice = voices.find(v => v.lang.startsWith('fr') && v.name.toLowerCase().includes('amelie'))
-    || voices.find(v => v.lang.startsWith('fr') && v.name.toLowerCase().includes('thomas'))
-    || voices.find(v => v.lang.startsWith('fr') && !v.name.toLowerCase().includes('compact'))
-    || voices.find(v => v.lang.startsWith('fr'))
-    || null;
+  // This device voice is only a FALLBACK (used when the pre-generated audio
+  // clips aren't available). Pick the least-robotic French voice on offer:
+  // natural/neural/Google/enhanced voices score highest, "compact" lowest.
+  const fr = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('fr'));
+  const score = (v) => {
+    const n = (v.name || '').toLowerCase();
+    let s = 0;
+    if (n.includes('natural') || n.includes('neural')) s += 6;
+    if (n.includes('google')) s += 5;
+    if (n.includes('enhanced') || n.includes('premium') || n.includes('siri')) s += 4;
+    if (n.includes('amelie') || n.includes('amélie') || n.includes('thomas')) s += 2;
+    if (v.localService === false) s += 2;   // network voices are usually nicer
+    if (n.includes('compact')) s -= 6;
+    return s;
+  };
+  frenchVoice = fr.slice().sort((a, b) => score(b) - score(a))[0] || null;
 }
 
 // Voices load async on some browsers
 if (speechSynthesis.getVoices().length) initVoices();
 speechSynthesis.addEventListener('voiceschanged', initVoices);
+
+// =====================================================
+// PRE-GENERATED AUDIO — natural neural voice, cached offline.
+// Clips live in audio/<id>.mp3 and are listed in audio/manifest.json.
+// If they're unavailable (e.g. opened as a file://), we fall back to the
+// device voice via speak().
+// =====================================================
+function slug(s) {
+  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+}
+
+let audioIds = null;                 // Set of available clip ids, or null
+const audioPlayer = new Audio();     // reused element (friendlier to iOS autoplay)
+let audioQueue = [];
+
+fetch('audio/manifest.json')
+  .then(r => r.ok ? r.json() : Promise.reject(r.status))
+  .then(ids => { audioIds = new Set(ids); })
+  .catch(() => { audioIds = null; });
+
+audioPlayer.addEventListener('ended', playNextClip);
+audioPlayer.addEventListener('error', playNextClip);
+
+function playNextClip() {
+  if (!voiceEnabled) { audioQueue = []; return; }
+  const id = audioQueue.shift();
+  if (!id) return;
+  audioPlayer.src = 'audio/' + id + '.mp3';
+  const p = audioPlayer.play();
+  if (p && p.catch) p.catch(() => {});
+}
+
+function stopAudio() {
+  audioQueue = [];
+  try { audioPlayer.pause(); } catch (e) {}
+}
+
+// Play a sequence of pre-generated clips by id. If any id is missing (or no
+// clips exist at all), fall back to the device voice reading `fallbackText`.
+function speakClips(ids, fallbackText) {
+  if (!voiceEnabled) return;
+  stopAudio();
+  speechSynthesis.cancel();
+  if (audioIds && ids.every(id => audioIds.has(id))) {
+    audioQueue = ids.slice();
+    playNextClip();
+  } else {
+    speak(fallbackText);
+  }
+}
 
 function speak(text) {
   if (!voiceEnabled || !text) return;
@@ -680,6 +740,7 @@ function speak(text) {
 }
 
 function stopSpeech() {
+  stopAudio();
   speechSynthesis.cancel();
 }
 
@@ -693,8 +754,9 @@ function toggleVoice() {
   if (!voiceEnabled) {
     stopSpeech();
   } else {
-    // Quick test so user knows it works (also triggers iOS audio permission)
-    speak("La voix est activée !");
+    // Quick test so user knows it works (also unlocks audio on iOS, since this
+    // runs inside the tap handler)
+    speakClips(['phrase-voice-on'], "La voix est activée !");
   }
 }
 
@@ -772,7 +834,8 @@ function selectBody(index, element) {
   element.classList.add('active'); activeEl = element;
 
   const body = bodies[index];
-  const fact = pick(body.funFacts);
+  const fi = Math.floor(Math.random() * body.funFacts.length);
+  const fact = body.funFacts[fi];
   const card = document.getElementById('infoCard');
 
   card.innerHTML = `
@@ -795,8 +858,13 @@ function selectBody(index, element) {
       <div class="tap-hint">Reclique pour un autre fait amusant !</div>
     </div>`;
 
-  // Speak the name, description, and fun fact
-  speak(`${body.nameFr || body.name}. ${body.desc} ... Le savais-tu ? ${fact}`);
+  // Speak the name + description, then the fun fact, as natural-voice clips
+  // (falling back to the device voice if the clips aren't available).
+  const sg = slug(body.name);
+  speakClips(
+    ['desc-' + sg, 'phrase-savais-tu', 'fact-' + sg + '-' + fi],
+    `${body.nameFr || body.name}. ${body.desc} ... Le savais-tu ? ${fact}`
+  );
 }
 
 // =====================================================
@@ -826,7 +894,8 @@ function setMode(m) {
 // QUIZ
 // =====================================================
 function startQuiz() {
-  quizOrder = shuffle(allQuizQuestions).slice(0, QUESTIONS_PER_ROUND);
+  // Keep each question's original index (_id) so we can find its audio clip.
+  quizOrder = shuffle(allQuizQuestions.map((qq, i) => ({ ...qq, _id: i }))).slice(0, QUESTIONS_PER_ROUND);
   quizIndex = 0; quizScore = 0;
   showQuestion();
 }
@@ -854,7 +923,7 @@ function showQuestion() {
     </div>`;
 
   // Read the question aloud
-  speak(q.q);
+  speakClips(['quiz-' + q._id], q.q);
 }
 
 const successMsgs = [
@@ -893,15 +962,15 @@ function answerQuiz(choice) {
   if (choice === q.correct) {
     quizScore++;
     feedback.className = 'quiz-feedback success';
-    const msg = pick(successMsgs);
-    feedback.textContent = msg;
-    speak(msg);
+    const si = Math.floor(Math.random() * successMsgs.length);
+    feedback.textContent = successMsgs[si];
+    speakClips(['success-' + si], successMsgs[si]);
   } else {
     feedback.className = 'quiz-feedback encourage';
-    const msg = pick(encourageMsgs);
-    feedback.textContent = msg;
-    const correctAnswer = q.answers[q.correct].replace(/[\u{1F000}-\u{1FFFF}]|[\u{2600}-\u{27BF}]/gu, '').trim();
-    speak(msg + " C'était : " + correctAnswer);
+    const ei = Math.floor(Math.random() * encourageMsgs.length);
+    feedback.textContent = encourageMsgs[ei];
+    // The correct answer is already highlighted in green on screen.
+    speakClips(['encourage-' + ei], encourageMsgs[ei]);
   }
 
   nextBtn.classList.add('visible');
@@ -910,24 +979,23 @@ function answerQuiz(choice) {
 
 function nextQuestion() { quizIndex++; showQuestion(); }
 
+const finishMessages = [
+  { key: 'perfect', min: 1,   emoji: "🏆🌟🚀", msg: "PARFAIT ! Super astronaute !" },
+  { key: 'great',   min: 0.8, emoji: "🌟🚀✨", msg: "Bravo, c'est super !" },
+  { key: 'good',    min: 0.5, emoji: "🚀💪✨", msg: "Beau travail !" },
+  { key: 'try',     min: 0,   emoji: "🌟📚🚀", msg: "Belle tentative !" },
+];
+
 function finishQuiz() {
   const total = quizOrder.length;
   const pct = quizScore / total;
-  let emoji, msg, sub;
-
-  if (pct === 1) {
-    emoji = "🏆🌟🚀"; msg = "PARFAIT ! Super astronaute !";
-    sub = `${quizScore}/${total} — Toutes les bonnes réponses !`;
-  } else if (pct >= 0.8) {
-    emoji = "🌟🚀✨"; msg = "Bravo, c'est super !";
-    sub = `${quizScore}/${total} étoiles — Tu connais bien l'espace !`;
-  } else if (pct >= 0.5) {
-    emoji = "🚀💪✨"; msg = "Beau travail !";
-    sub = `${quizScore}/${total} étoiles — Tu apprends vite !`;
-  } else {
-    emoji = "🌟📚🚀"; msg = "Belle tentative !";
-    sub = `${quizScore}/${total} étoiles — Explore les planètes et réessaie !`;
-  }
+  const tier = finishMessages.find(t => pct >= t.min) || finishMessages[finishMessages.length - 1];
+  const emoji = tier.emoji, msg = tier.msg;
+  let sub;
+  if (tier.key === 'perfect') sub = `${quizScore}/${total} — Toutes les bonnes réponses !`;
+  else if (tier.key === 'great') sub = `${quizScore}/${total} étoiles — Tu connais bien l'espace !`;
+  else if (tier.key === 'good') sub = `${quizScore}/${total} étoiles — Tu apprends vite !`;
+  else sub = `${quizScore}/${total} étoiles — Explore les planètes et réessaie !`;
 
   // Personal best, remembered on this device
   let best = 0;
@@ -946,7 +1014,7 @@ function finishQuiz() {
   document.getElementById('celebSub').innerHTML = `${sub}<br><span style="color:rgba(255,255,255,0.5); font-size:0.9rem">${recordLine}</span>`;
   document.getElementById('celebration').classList.add('active');
   launchConfetti();
-  speak(`${msg} ${sub} ${recordLine}`);
+  speakClips(['finish-' + tier.key], `${msg} ${sub} ${recordLine}`);
 }
 
 function closeCelebration(nextMode) {

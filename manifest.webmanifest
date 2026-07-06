@@ -1,0 +1,20 @@
+{
+  "name": "Le Système Solaire d'Adélie",
+  "short_name": "Système Solaire",
+  "description": "Explore le Soleil et les 8 planètes, écoute-les en français, et teste tes connaissances avec un quiz pour les enfants.",
+  "lang": "fr",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0a0e27",
+  "theme_color": "#0a0e27",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

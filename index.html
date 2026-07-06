@@ -393,7 +393,7 @@ const bodies = [
     name: "Mercure", emoji: "🪨", subtitle: "La plus rapide",
     size: 3, color: "radial-gradient(circle at 35% 35%, #b8b8b8, #8a8a8a 60%, #5a5a5a)",
     glow: "rgba(180,180,180,0.4)", accent: "#b8b8b8",
-    desc: "Mercure est la planète la plus proche du Soleil et la plus petite de toutes ! Elle fait le tour du Soleil super vite — en seulement 88 jours, c'est la championne de la course ! Mais elle tourne très lentement sur elle-même. Un seul jour sur Mercure dure 59 jours terrestres ! Imagine : tu attendrais presque deux mois pour voir un coucher de soleil.",
+    desc: "Mercure est la planète la plus proche du Soleil et la plus petite de toutes ! Elle fait le tour du Soleil super vite — en seulement 88 jours, c'est la championne de la course ! Mais elle tourne très lentement sur elle-même : un tour complet prend 59 jours terrestres. Et comme elle avance aussi autour du Soleil, il se passe 176 jours entre deux levers de soleil — presque six mois à attendre pour revoir le Soleil se lever !",
     funFacts: [
       "Sur Mercure, le jour c'est brûlant (430°C) et la nuit c'est glacial (-180°C). Brrr et Aïe en même temps !",
       "Mercure est couverte de cratères, comme notre Lune. Des roches de l'espace lui sont tombées dessus pendant des milliards d'années !",
@@ -651,7 +651,8 @@ let frenchVoice = null;
 // =====================================================
 function initVoices() {
   const voices = speechSynthesis.getVoices();
-  // Prefer a French voice, ideally female for storytelling feel
+  // Prefer a specific good-quality French voice (Amélie, then Thomas),
+  // then any non-"compact" French voice, then any French voice at all.
   frenchVoice = voices.find(v => v.lang.startsWith('fr') && v.name.toLowerCase().includes('amelie'))
     || voices.find(v => v.lang.startsWith('fr') && v.name.toLowerCase().includes('thomas'))
     || voices.find(v => v.lang.startsWith('fr') && !v.name.toLowerCase().includes('compact'))
